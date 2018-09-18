@@ -4,7 +4,9 @@ const Comment = require('../src/comment');
 const BlogPost = require('../src/blogPost');
 
 describe('Association', () => {
+
   let joe, blogPost, comment;
+
   beforeEach((done) => {
     joe = new User({ name: 'Joe' });
     blogPost = new BlogPost({ title: 'JS is great', content: 'yes it is' });
@@ -23,7 +25,7 @@ describe('Association', () => {
     .then(() => done());
   });
 
-  it.only('saves a relation between a user and a blogpost', (done) => {
+  it('saves a relation between a user and a blogpost', (done) => {
     User.findOne({ name: 'Joe' })
       .populate('blogPosts')
       .then((user) => {
@@ -31,4 +33,25 @@ describe('Association', () => {
         done();
       });
   });
+
+    it('saves a full relation graph', (done) => {
+      User.findOne({ name: 'Joe' })
+        .populate({
+          path: 'blogPosts',
+          populate: {
+            path: 'comments',
+            model: 'comment',
+            populate: {
+              path: 'user',
+              model: 'user'
+            }
+          }
+        })
+        .then((user) => {
+          assert(user.name === 'Joe');
+          assert(user.blogPosts[0].title === 'JS is great');
+          assert(user.blogPosts[0].comments[0].content === 'Thats really true my friend');
+          done();
+        });
+    });
 });
